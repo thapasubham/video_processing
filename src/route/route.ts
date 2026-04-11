@@ -1,1 +1,0 @@
-../module/video/controller.js
