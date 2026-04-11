@@ -1,6 +1,6 @@
 import express from "express";
 import type { Request, Response } from "express";
-import { router } from "./route/route.js";
+import { router } from "./module/video/route.js";
 
 function startServer() {
   const app = express();

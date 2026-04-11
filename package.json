@@ -7,7 +7,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "start": "tsx --watch src/index.ts"
+    "dev": "tsx --watch src/index.ts"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",

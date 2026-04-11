@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import type { VideoService } from "../service/service.js";
+import type { VideoService } from "./service.js";
 
 export class VideoController {
   constructor(private readonly videoService: VideoService) {}
