@@ -8,7 +8,7 @@ export class VideoService {
 
   async uploadVideo(file: Express.Multer.File, title: string) {
     return this.videoRepository.create({
-      title: title || file.originalname,
+      title: title || file.filename,
       filename: file.filename,
       filePath: file.path,
       mimeType: file.mimetype,

@@ -2,7 +2,7 @@ import { Router } from "express";
 import { VideoController } from "./controller.js";
 import { VideoService } from "./service.js";
 import { VideoRepository } from "./repository.js";
-import upload from "../../middleware.ts/fileUpload.js";
+import upload from "../../middleware/fileUpload.js";
 
 const route = Router();
 const videoRepository = new VideoRepository();
