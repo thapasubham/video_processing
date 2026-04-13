@@ -1,6 +1,5 @@
 import type { Request, Response } from "express";
 import type { VideoService } from "./service.js";
-
 export class VideoController {
   constructor(private readonly videoService: VideoService) {}
 
@@ -12,6 +11,13 @@ export class VideoController {
     }
 
     const title = (req.body as { title?: string }).title ?? file.originalname;
+
+    const result = await this.videoService.fileProcess(
+      file.path,
+      file.filename,
+      "uploads/processed",
+    );
+    file.filename = result;
     const video = await this.videoService.uploadVideo(file, title);
     res.status(201).json({ message: "Video uploaded", video });
   };
@@ -22,11 +28,11 @@ export class VideoController {
   };
 
   getVideoById = async (req: Request, res: Response) => {
-    const id = req.params.id;
-    if (id == null) {
+    const { id } = req.params;
+    if (id == undefined) {
       return res.send(400).json({ error: "Id missing" });
     }
-    const video = await this.videoService.getVideoById(req.params.id);
+    const video = await this.videoService.getVideoById(req.params.id as string);
     if (!video) {
       res.status(404).json({ error: "Video not found" });
       return;

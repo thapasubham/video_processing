@@ -2,7 +2,6 @@ import { Schema, model } from "mongoose";
 
 export interface IVideo {
   title: string;
-  originalName: string;
   filename: string;
   filePath: string;
   mimeType: string;
@@ -14,7 +13,6 @@ export interface IVideo {
 const videoSchema = new Schema<IVideo>(
   {
     title: { type: String, required: true },
-    originalName: { type: String, required: true },
     filename: { type: String, required: true },
     filePath: { type: String, required: true },
     mimeType: { type: String, required: true },
