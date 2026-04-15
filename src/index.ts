@@ -25,6 +25,14 @@ async function startServer() {
   app.listen(port, () => {
     console.log(`Listening at port: ${port}`);
   });
+  process.on("SIGINT", () => {
+    console.log("Exiting program");
+    process.exit(1);
+  });
+  process.on("SIGTERM", () => {
+    console.log("Exiting program");
+    process.exit(1);
+  });
 }
 
 startServer();
