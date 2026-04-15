@@ -34,7 +34,7 @@ export class VideoController {
             error: "Error occured when File Upload",
             message: err.message,
           })
-          .status(500);
+          .status(415);
       }
     }
   };

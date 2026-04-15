@@ -50,7 +50,7 @@ class FileProcessing {
         if (code === 0) {
           await helperClass.DeleteFile(inputPath);
           resolve(outputFile);
-        } else reject(new Error(`ffmpeg exited with code ${code}`));
+        } else reject("Failed to process file");
       });
 
       ffmpeg.on("error", reject);
