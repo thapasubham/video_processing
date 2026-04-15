@@ -2,6 +2,8 @@ import path from "path";
 import type { Request, Response } from "express";
 import type { VideoService } from "./service.js";
 import { mimeTypes } from "../../types/mime.types.js";
+import fs from "fs/promises";
+
 export class VideoController {
   constructor(private readonly videoService: VideoService) {}
 
@@ -22,7 +24,7 @@ export class VideoController {
       );
       file.filename = path.basename(result);
       file.path = result;
-
+      file.size = (await fs.stat(result)).size;
       file.mimetype =
         mimeTypes[path.extname(result).toLowerCase()] ?? file.mimetype;
       const video = await this.videoService.uploadVideo(file, title);
