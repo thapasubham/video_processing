@@ -30,8 +30,14 @@ export class VideoService {
       const ffmpeg = spawn("ffmpeg", [
         "-i",
         inputPath,
+        "-vcodec",
+        "libwebp",
         "-q:v",
-        "2",
+        "40",
+        "-compression_level",
+        "6",
+        "-vf",
+        "scale=iw*0.5:ih*0.5",
         outputFile,
       ]);
 
