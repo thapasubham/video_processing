@@ -1,4 +1,5 @@
 import { helperClass } from "../../utils/utils.js";
+import { fileProcessing } from "../fileProcessing/fileProcessing.js";
 import type { VideoRepository } from "./repository.js";
 import type { IVideo } from "./video.model.js";
 import { spawn } from "child_process";
@@ -16,40 +17,8 @@ export class VideoService {
     });
   }
 
-  async fileProcess(
-    inputPath: string,
-    fileName: string,
-    outputDir: string,
-  ): Promise<string> {
-    const originalName = fileName.split(".")[0];
-    const outputFile = `${outputDir}/${originalName}.webp`;
-    console.log("Processing file");
-    console.log("Reading file from: ", inputPath);
-    console.log("Writing file to: ", outputFile);
-    return new Promise((resolve, reject) => {
-      const ffmpeg = spawn("ffmpeg", [
-        "-i",
-        inputPath,
-        "-vcodec",
-        "libwebp",
-        "-q:v",
-        "40",
-        "-compression_level",
-        "6",
-        "-vf",
-        "scale=iw*0.5:ih*0.5",
-        outputFile,
-      ]);
-
-      ffmpeg.on("close", async (code) => {
-        if (code === 0) {
-          await helperClass.DeleteFile(inputPath);
-          resolve(outputFile);
-        } else reject(new Error(`ffmpeg exited with code ${code}`));
-      });
-
-      ffmpeg.on("error", reject);
-    });
+  async fileProcess(inputPath: string, fileName: string, mineType: string) {
+    return await fileProcessing.processFile(inputPath, fileName, mineType);
   }
   async getAllVideos() {
     return this.videoRepository.findAll();

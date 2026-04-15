@@ -6,26 +6,37 @@ export class VideoController {
   constructor(private readonly videoService: VideoService) {}
 
   uploadVideo = async (req: Request, res: Response) => {
-    const file = req.file;
-    if (!file) {
-      res.status(400).json({ error: "No file provided" });
-      return;
+    try {
+      const file = req.file;
+      if (!file) {
+        res.status(400).json({ error: "No file provided" });
+        return;
+      }
+
+      const title = (req.body as { title?: string }).title ?? file.originalname;
+
+      const result = await this.videoService.fileProcess(
+        file.path,
+        file.filename,
+        file.mimetype,
+      );
+      file.filename = path.basename(result);
+      file.path = result;
+
+      file.mimetype =
+        mimeTypes[path.extname(result).toLowerCase()] ?? file.mimetype;
+      const video = await this.videoService.uploadVideo(file, title);
+      res.status(201).json({ message: "File uploaded", video });
+    } catch (err) {
+      if (err instanceof Error) {
+        res
+          .json({
+            error: "Error occured when File Upload",
+            message: err.message,
+          })
+          .status(500);
+      }
     }
-
-    const title = (req.body as { title?: string }).title ?? file.originalname;
-
-    const result = await this.videoService.fileProcess(
-      file.path,
-      file.filename,
-      "uploads/processed",
-    );
-    file.filename = path.basename(result);
-    file.path = result;
-
-    file.mimetype =
-      mimeTypes[path.extname(result).toLowerCase()] ?? file.mimetype;
-    const video = await this.videoService.uploadVideo(file, title);
-    res.status(201).json({ message: "File uploaded", video });
   };
 
   getAllVideos = async (req: Request, res: Response) => {
