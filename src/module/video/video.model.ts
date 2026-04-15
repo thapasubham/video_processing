@@ -7,7 +7,6 @@ export interface IVideo {
   mimeType: string;
   size: number;
   status: "pending" | "processing" | "done" | "failed";
-  uploadedAt: Date;
 }
 
 const videoSchema = new Schema<IVideo>(
@@ -17,7 +16,7 @@ const videoSchema = new Schema<IVideo>(
     filePath: { type: String, required: true },
     mimeType: { type: String, required: true },
     size: { type: Number, required: true },
-    uploadedAt: { type: Date, default: Date.now },
+    status: { type: String, enum: ["pending", "processing", "done", "failed"], default: "pending" },
   },
   { timestamps: true },
 );

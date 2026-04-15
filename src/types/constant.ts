@@ -3,3 +3,4 @@ export const directories = {
   VIDEO_UPLOAD: "uploads/processed/video",
   TEMP_UPLOAD: "uploads/temp",
 };
+export const COMPRESSED_IMAGE_FORMAT = ".webp";

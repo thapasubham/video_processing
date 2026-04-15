@@ -1,23 +1,28 @@
-import { helperClass } from "../../utils/utils.js";
-import { fileProcessing } from "../fileProcessing/fileProcessing.js";
+import {
+  fileProcessing,
+  type ProcessedFile,
+} from "../fileProcessing/fileProcessing.js";
 import type { VideoRepository } from "./repository.js";
 import type { IVideo } from "./video.model.js";
-import { spawn } from "child_process";
 
 export class VideoService {
   constructor(private readonly videoRepository: VideoRepository) {}
 
-  async uploadVideo(file: Express.Multer.File, title: string) {
+  async uploadVideo(file: ProcessedFile, title: string) {
     return this.videoRepository.create({
-      title: title || file.filename,
+      title,
       filename: file.filename,
-      filePath: file.path,
-      mimeType: file.mimetype,
+      filePath: file.filePath,
+      mimeType: file.mimeType,
       size: file.size,
     });
   }
 
-  async fileProcess(inputPath: string, fileName: string, mineType: string) {
+  async fileProcess(
+    inputPath: string,
+    fileName: string,
+    mineType: string,
+  ): Promise<ProcessedFile> {
     return await fileProcessing.processFile(inputPath, fileName, mineType);
   }
   async getAllVideos() {

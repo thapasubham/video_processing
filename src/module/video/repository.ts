@@ -1,7 +1,7 @@
 import { VideoModel, type IVideo } from "./video.model.js";
 
 export class VideoRepository {
-  async create(data: Omit<IVideo, "status" | "uploadedAt">) {
+  async create(data: Omit<IVideo, "status">) {
     return VideoModel.create(data);
   }
 
