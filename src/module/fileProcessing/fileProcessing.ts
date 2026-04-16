@@ -2,7 +2,11 @@ import { spawn } from "child_process";
 import path from "path";
 import fs from "fs/promises";
 import { helperClass } from "../../utils/utils.js";
-import { COMPRESSED_IMAGE_FORMAT, directories } from "../../types/constant.js";
+import {
+  COMPRESSED_IMAGE_FORMAT,
+  COMPRESSED_VIDEO_FORMAT,
+  directories,
+} from "../../types/constant.js";
 import { mimeTypes } from "../../types/mime.types.js";
 
 export interface ProcessedFile {
@@ -24,41 +28,33 @@ class FileProcessing {
     if (!allowedType) {
       throw new Error("THis file format isnt allowed");
     }
-    if (mimeType.startsWith("image")) {
-      return await this.fileImage(
-        inputPath,
-        fileName,
-        directories.IMAGE_UPLOAD,
-      );
-    }
-    throw new Error("Unsupported file type");
+
+    return await this.fileProcess(inputPath, fileName, mimeType);
   }
 
-  private async fileImage(
+  private async fileProcess(
     inputPath: string,
     fileName: string,
-    outputDir: string,
+    mimeType: string,
   ): Promise<ProcessedFile> {
     const originalName = fileName.split(".")[0];
-    const outputFile = `${outputDir}/${originalName}.${COMPRESSED_IMAGE_FORMAT}`;
+
     console.log("Processing file");
     console.log("Reading file from: ", inputPath);
-    console.log("Writing file to: ", outputFile);
     return new Promise((resolve, reject) => {
-      const ffmpeg = spawn("ffmpeg", [
-        "-i",
-        inputPath,
-        "-vcodec",
-        "libwebp",
-        "-q:v",
-        "40",
-        "-compression_level",
-        "6",
-        "-vf",
-        "scale=iw*0.5:ih*0.5",
-        outputFile,
-      ]);
+      let ffmpeg;
+      let outputFile: string;
+      if (mimeType.startsWith("image")) {
+        outputFile = `${directories.IMAGE_UPLOAD}/${originalName}.${COMPRESSED_IMAGE_FORMAT}`;
+        console.log("Writing file to: ", outputFile);
 
+        ffmpeg = this.imageChild(inputPath, outputFile);
+      } else {
+        outputFile = `${directories.VIDEO_UPLOAD}/${originalName}.${COMPRESSED_VIDEO_FORMAT}`;
+        console.log("Writing file to: ", outputFile);
+
+        ffmpeg = this.videoChild(inputPath, outputFile);
+      }
       ffmpeg.on("close", async (code) => {
         if (code === 0) {
           await helperClass.DeleteFile(inputPath);
@@ -74,6 +70,35 @@ class FileProcessing {
 
       ffmpeg.on("error", reject);
     });
+  }
+
+  imageChild(inputPath: string, outputFile: string) {
+    return spawn("ffmpeg", [
+      "-i",
+      inputPath,
+      "-vcodec",
+      "libwebp",
+      "-q:v",
+      "40",
+      "-compression_level",
+      "6",
+      "-vf",
+      "scale=iw*0.5:ih*0.5",
+      outputFile,
+    ]);
+  }
+  videoChild(inputPath: string, outputFile: string) {
+    return spawn("ffmpeg", [
+      "-i",
+      inputPath,
+      "-vcodec",
+      "libx264",
+      "-crf",
+      "23",
+      "-preset",
+      "medium",
+      outputFile,
+    ]);
   }
 }
 export const fileProcessing = new FileProcessing();
