@@ -14,6 +14,20 @@ export class VideoRepository {
   }
 
   async updateStatus(id: string, status: IVideo["status"]) {
-    return VideoModel.findByIdAndUpdate(id, { status }, { new: true });
+    return VideoModel.findByIdAndUpdate(
+      id,
+      { status },
+      { returnDocument: "after" },
+    );
+  }
+
+  async updateAfterProcessing(
+    id: string,
+    data: Pick<
+      IVideo,
+      "filename" | "filePath" | "mimeType" | "size" | "status"
+    >,
+  ) {
+    return VideoModel.findByIdAndUpdate(id, data, { returnDocument: "after" });
   }
 }

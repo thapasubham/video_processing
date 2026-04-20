@@ -1,3 +1,4 @@
+import type { Express } from "express";
 import {
   fileProcessing,
   type ProcessedFile,
@@ -7,6 +8,49 @@ import type { IVideo } from "./video.model.js";
 
 export class VideoService {
   constructor(private readonly videoRepository: VideoRepository) {}
+
+  async createPendingFromUpload(file: Express.Multer.File, title: string) {
+    return this.videoRepository.create({
+      title,
+      filename: file.filename,
+      filePath: file.path,
+      mimeType: file.mimetype,
+      size: file.size,
+    });
+  }
+
+  async processQueuedVideo(videoId: string) {
+    const video = await this.videoRepository.findById(videoId);
+    if (!video) {
+      console.warn(`Video job: document not found (${videoId})`);
+      return;
+    }
+    if (video.status !== "pending") {
+      console.warn(
+        `Video job: skip ${videoId}, status is ${video.status}`,
+      );
+      return;
+    }
+
+    await this.updateStatus(videoId, "processing");
+    try {
+      const processed = await this.fileProcess(
+        video.filePath,
+        video.filename,
+        video.mimeType,
+      );
+      await this.videoRepository.updateAfterProcessing(videoId, {
+        filename: processed.filename,
+        filePath: processed.filePath,
+        mimeType: processed.mimeType,
+        size: processed.size,
+        status: "done",
+      });
+    } catch (err) {
+      console.error(`Video job failed (${videoId}):`, err);
+      await this.updateStatus(videoId, "failed");
+    }
+  }
 
   async uploadVideo(file: ProcessedFile, title: string) {
     return this.videoRepository.create({

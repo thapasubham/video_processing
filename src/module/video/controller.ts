@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import type { VideoService } from "./service.js";
+import { publishVideoProcessJob } from "../../external/rabbitmq/producer.js";
 
 export class VideoController {
   constructor(private readonly videoService: VideoService) {}
@@ -13,10 +14,25 @@ export class VideoController {
       }
 
       const title = (req.body as { title?: string }).title ?? file.originalname;
-      const processed = await this.videoService.fileProcess(file.path, file.filename, file.mimetype);
-      const video = await this.videoService.uploadVideo(processed, title);
-      await this.videoService.updateStatus(video.id, "done");
-      res.status(201).json({ message: "File uploaded", video });
+      const video = await this.videoService.createPendingFromUpload(
+        file,
+        title,
+      );
+      const videoId = String(video._id);
+      const enqueued = await publishVideoProcessJob(videoId);
+      if (!enqueued) {
+        await this.videoService.updateStatus(videoId, "failed");
+        res.status(503).json({
+          error: "Could not enqueue processing job",
+          video,
+        });
+        return;
+      }
+
+      res.status(202).json({
+        message: "Upload accepted; processing in background",
+        video,
+      });
     } catch (err) {
       if (err instanceof Error) {
         res
@@ -37,7 +53,7 @@ export class VideoController {
   getVideoById = async (req: Request, res: Response) => {
     const { id } = req.params;
     if (id == undefined) {
-      return res.send(400).json({ error: "Id missing" });
+      return res.status(400).json({ error: "Id missing" });
     }
     const video = await this.videoService.getVideoById(req.params.id as string);
     if (!video) {

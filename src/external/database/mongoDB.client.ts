@@ -1,12 +1,9 @@
 import mongoose from "mongoose";
-
-const MONGODB_URI =
-  process.env.MONGODB_URI ??
-  "mongodb://root:example@localhost:27021/video_procssing";
+import { config } from "../../utils/config.js";
 
 export async function connectMongoDB(): Promise<void> {
   try {
-    await mongoose.connect(MONGODB_URI);
+    await mongoose.connect(config.MONGODB_URI);
     console.log("MongoDB connected");
   } catch (err) {
     if (err instanceof Error) {

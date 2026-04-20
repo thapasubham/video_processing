@@ -3,6 +3,9 @@ import type { Request, Response } from "express";
 import { router } from "./module/video/route.js";
 import { connectMongoDB } from "./external/database/mongoDB.client.js";
 import { helperClass } from "./utils/utils.js";
+import { rabbitMQ } from "./external/rabbitmq/rabbitmq.client.js";
+import { registerQueue } from "./external/rabbitmq/registerQueues.js";
+import { config } from "./utils/config.js";
 
 async function startServer() {
   await connectMongoDB();
@@ -11,6 +14,9 @@ async function startServer() {
   const port = 5000;
 
   app.use(express.json());
+
+  await rabbitMQ.connect();
+  await registerQueue(config.VIDEO_PROCESS_QUEUE);
   await helperClass.createDirectories();
   app.get("/", (req: Request, res: Response) => {
     return res.send("Hello");
