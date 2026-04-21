@@ -6,6 +6,7 @@ import { helperClass } from "./utils/utils.js";
 import { rabbitMQ } from "./external/rabbitmq/rabbitmq.client.js";
 import { registerQueue } from "./external/rabbitmq/registerQueues.js";
 import { config } from "./utils/config.js";
+import { errorHandler } from "./middleware/errorHandler.js";
 
 async function startServer() {
   await connectMongoDB();
@@ -27,6 +28,8 @@ async function startServer() {
   app.use("", (req: Request, res: Response) => {
     res.status(404).send("Route doesn't exists");
   });
+
+  app.use(errorHandler);
 
   app.listen(port, () => {
     console.log(`Listening at port: ${port}`);
