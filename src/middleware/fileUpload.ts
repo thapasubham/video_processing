@@ -17,7 +17,7 @@ const upload = multer({
     ) {
       cb(null, true);
     } else {
-      cb(new Error("Only video files are allowed"));
+      cb(new Error("Only image and video files are allowed"));
     }
   },
   limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB

@@ -35,12 +35,11 @@ export class VideoController {
       });
     } catch (err) {
       if (err instanceof Error) {
-        res
+        res.status(415)
           .json({
             error: "Error occured when File Upload",
             message: err.message,
-          })
-          .status(415);
+          });
       }
     }
   };
