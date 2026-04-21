@@ -34,13 +34,12 @@ export class VideoController {
         video,
       });
     } catch (err) {
-      if (err instanceof Error) {
-        res.status(415)
-          .json({
-            error: "Error occured when File Upload",
-            message: err.message,
-          });
-      }
+      const message =
+        err instanceof Error ? err.message : "An unexpected error occurred";
+      res.status(500).json({
+        error: "Error occurred while uploading",
+        message,
+      });
     }
   };
 
