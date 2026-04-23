@@ -16,6 +16,7 @@ export class VideoService {
       filePath: file.path,
       mimeType: file.mimetype,
       size: file.size,
+      thumbnail: "",
     });
   }
 
@@ -26,9 +27,7 @@ export class VideoService {
       return;
     }
     if (video.status !== "pending") {
-      console.warn(
-        `Video job: skip ${videoId}, status is ${video.status}`,
-      );
+      console.warn(`Video job: skip ${videoId}, status is ${video.status}`);
       return;
     }
 
@@ -39,13 +38,15 @@ export class VideoService {
         video.filename,
         video.mimeType,
       );
-      await this.videoRepository.updateAfterProcessing(videoId, {
+      const result = await this.videoRepository.updateAfterProcessing(videoId, {
         filename: processed.filename,
         filePath: processed.filePath,
         mimeType: processed.mimeType,
         size: processed.size,
+        thumbnail: processed.thumbnail ?? "",
         status: "done",
       });
+      return result;
     } catch (err) {
       console.error(`Video job failed (${videoId}):`, err);
       await this.updateStatus(videoId, "failed");
@@ -59,6 +60,7 @@ export class VideoService {
       filePath: file.filePath,
       mimeType: file.mimeType,
       size: file.size,
+      thumbnail: file.thumbnail ?? "",
     });
   }
 

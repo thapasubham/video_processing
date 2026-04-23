@@ -10,14 +10,14 @@ export class VideoRepository {
   }
 
   async findAll() {
-    return VideoModel.find().sort({ uploadedAt: -1 });
+    return VideoModel.find().sort({ createdAt: -1 });
   }
 
   async updateStatus(id: string, status: IVideo["status"]) {
     return VideoModel.findByIdAndUpdate(
       id,
-      { status },
-      { returnDocument: "after" },
+      { $set: { status } },
+      { new: true, runValidators: true },
     );
   }
 
@@ -25,9 +25,13 @@ export class VideoRepository {
     id: string,
     data: Pick<
       IVideo,
-      "filename" | "filePath" | "mimeType" | "size" | "status"
+      "filename" | "filePath" | "mimeType" | "size" | "status" | "thumbnail"
     >,
   ) {
-    return VideoModel.findByIdAndUpdate(id, data, { returnDocument: "after" });
+    return VideoModel.findByIdAndUpdate(
+      id,
+      { $set: data },
+      { new: true, runValidators: true },
+    );
   }
 }

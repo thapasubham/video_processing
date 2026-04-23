@@ -1,14 +1,25 @@
 import { rabbitMQ } from "./rabbitmq.client.js";
 import { config } from "../../utils/config.js";
 
-export type VideoProcessMessage = { videoId: string };
+/** New messages; worker also accepts legacy `{ videoId }`. */
+export type MediaProcessMessage = {
+  mediaId: string;
+  kind: "image" | "video";
+};
 
+export type LegacyVideoProcessMessage = { videoId: string };
+
+export async function publishMediaProcessJob(
+  message: MediaProcessMessage,
+): Promise<boolean> {
+  return producer(config.VIDEO_PROCESS_QUEUE, message);
+}
+
+/** @deprecated Prefer publishMediaProcessJob with explicit kind */
 export async function publishVideoProcessJob(
   videoId: string,
 ): Promise<boolean> {
-  return producer<VideoProcessMessage>(config.VIDEO_PROCESS_QUEUE, {
-    videoId,
-  });
+  return publishMediaProcessJob({ mediaId: videoId, kind: "video" });
 }
 
 export async function producer<T>(

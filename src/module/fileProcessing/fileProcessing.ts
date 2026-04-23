@@ -56,7 +56,8 @@ class FileProcessing {
     console.log("Processing file");
     console.log("Reading file from: ", inputPath);
 
-    if (mimeType.startsWith("image")) {
+    const lowerMime = mimeType.toLowerCase();
+    if (lowerMime.startsWith("image/")) {
       const outputFile = `${directories.IMAGE_UPLOAD}/${originalName}${COMPRESSED_IMAGE_FORMAT}`;
       console.log("Writing file to: ", outputFile);
       await this.runFfmpeg(this.imageChild(inputPath, outputFile));
@@ -74,6 +75,7 @@ class FileProcessing {
     const thumbnailFile = `${directories.THUMBNAIL_UPLOAD}/${originalName}${VIDEO_THUMB_EXT}`;
     console.log("Writing file to: ", outputFile);
     await this.runFfmpeg(this.videoChild(inputPath, outputFile));
+    await fs.mkdir(directories.THUMBNAIL_UPLOAD, { recursive: true });
     console.log("Writing thumbnail to: ", thumbnailFile);
     await this.runFfmpeg(this.thumbnailChild(outputFile, thumbnailFile));
     await helperClass.DeleteFile(inputPath);
@@ -89,6 +91,7 @@ class FileProcessing {
 
   imageChild(inputPath: string, outputFile: string) {
     return spawn("ffmpeg", [
+      "-y",
       "-i",
       inputPath,
       "-vcodec",
@@ -104,6 +107,7 @@ class FileProcessing {
   }
   videoChild(inputPath: string, outputFile: string) {
     return spawn("ffmpeg", [
+      "-y",
       "-i",
       inputPath,
       "-vcodec",
@@ -117,6 +121,7 @@ class FileProcessing {
   }
   thumbnailChild(inputPath: string, outputFile: string) {
     return spawn("ffmpeg", [
+      "-y",
       "-i",
       inputPath,
       "-vf",
