@@ -1,4 +1,4 @@
-import { spawn } from "child_process";
+import { spawn, type ChildProcessWithoutNullStreams } from "child_process";
 import path from "path";
 import fs from "fs/promises";
 import { helperClass } from "../../utils/utils.js";
@@ -9,11 +9,15 @@ import {
 } from "../../types/constant.js";
 import { mimeTypes } from "../../types/mime.types.js";
 
+const VIDEO_THUMB_EXT = ".jpg";
+
 export interface ProcessedFile {
   filename: string;
   filePath: string;
   size: number;
   mimeType: string;
+  /** Set for video output; path lives under uploads/processed/thumbnail */
+  thumbnail?: string;
 }
 
 class FileProcessing {
@@ -32,6 +36,16 @@ class FileProcessing {
     return await this.fileProcess(inputPath, fileName, mimeType);
   }
 
+  private runFfmpeg(child: ChildProcessWithoutNullStreams): Promise<void> {
+    return new Promise((resolve, reject) => {
+      child.on("close", (code) => {
+        if (code === 0) resolve();
+        else reject(new Error("Failed to process file"));
+      });
+      child.on("error", reject);
+    });
+  }
+
   private async fileProcess(
     inputPath: string,
     fileName: string,
@@ -41,35 +55,36 @@ class FileProcessing {
 
     console.log("Processing file");
     console.log("Reading file from: ", inputPath);
-    return new Promise((resolve, reject) => {
-      let ffmpeg;
-      let outputFile: string;
-      if (mimeType.startsWith("image")) {
-        outputFile = `${directories.IMAGE_UPLOAD}/${originalName}.${COMPRESSED_IMAGE_FORMAT}`;
-        console.log("Writing file to: ", outputFile);
 
-        ffmpeg = this.imageChild(inputPath, outputFile);
-      } else {
-        outputFile = `${directories.VIDEO_UPLOAD}/${originalName}.${COMPRESSED_VIDEO_FORMAT}`;
-        console.log("Writing file to: ", outputFile);
+    if (mimeType.startsWith("image")) {
+      const outputFile = `${directories.IMAGE_UPLOAD}/${originalName}${COMPRESSED_IMAGE_FORMAT}`;
+      console.log("Writing file to: ", outputFile);
+      await this.runFfmpeg(this.imageChild(inputPath, outputFile));
+      await helperClass.DeleteFile(inputPath);
+      const size = (await fs.stat(outputFile)).size;
+      return {
+        filename: path.basename(outputFile),
+        filePath: outputFile,
+        size,
+        mimeType: mimeTypes[COMPRESSED_IMAGE_FORMAT] ?? "image/webp",
+      };
+    }
 
-        ffmpeg = this.videoChild(inputPath, outputFile);
-      }
-      ffmpeg.on("close", async (code) => {
-        if (code === 0) {
-          await helperClass.DeleteFile(inputPath);
-          const size = (await fs.stat(outputFile)).size;
-          resolve({
-            filename: path.basename(outputFile),
-            filePath: outputFile,
-            size,
-            mimeType: mimeTypes[`${COMPRESSED_IMAGE_FORMAT}`] || "image/webp",
-          });
-        } else reject(new Error("Failed to process file"));
-      });
-
-      ffmpeg.on("error", reject);
-    });
+    const outputFile = `${directories.VIDEO_UPLOAD}/${originalName}${COMPRESSED_VIDEO_FORMAT}`;
+    const thumbnailFile = `${directories.THUMBNAIL_UPLOAD}/${originalName}${VIDEO_THUMB_EXT}`;
+    console.log("Writing file to: ", outputFile);
+    await this.runFfmpeg(this.videoChild(inputPath, outputFile));
+    console.log("Writing thumbnail to: ", thumbnailFile);
+    await this.runFfmpeg(this.thumbnailChild(outputFile, thumbnailFile));
+    await helperClass.DeleteFile(inputPath);
+    const size = (await fs.stat(outputFile)).size;
+    return {
+      filename: path.basename(outputFile),
+      filePath: outputFile,
+      size,
+      mimeType: mimeTypes[COMPRESSED_VIDEO_FORMAT] ?? "video/mp4",
+      thumbnail: thumbnailFile,
+    };
   }
 
   imageChild(inputPath: string, outputFile: string) {
@@ -97,6 +112,19 @@ class FileProcessing {
       "23",
       "-preset",
       "medium",
+      outputFile,
+    ]);
+  }
+  thumbnailChild(inputPath: string, outputFile: string) {
+    return spawn("ffmpeg", [
+      "-i",
+      inputPath,
+      "-vf",
+      "thumbnail=300,scale=320:-1",
+      "-frames:v",
+      "1",
+      "-q:v",
+      "2",
       outputFile,
     ]);
   }

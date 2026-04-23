@@ -4,4 +4,5 @@ export const mimeTypes: Record<string, string> = {
   ".webm": "video/webm",
   ".png": "image/png",
   ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
 };
